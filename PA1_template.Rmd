@@ -1,25 +1,137 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
+author: "Adam Ficke"
+date: "2/18/2021"
 output: 
-  html_document:
-    keep_md: true
+  html_document: 
+    keep_md: yes
 ---
 
 
 ## Loading and preprocessing the data
 
-
+```{r preprocessing}
+library(tidyverse)
+df1 <- read_csv("activity.zip") %>%
+        drop_na()
+```
 
 ## What is mean total number of steps taken per day?
 
+```{r mean_steps, echo=TRUE}
 
+df1 <- df1 %>% 
+        group_by(date) %>% 
+        summarize(tot_steps = sum(steps)) 
+
+df1 %>% 
+        ggplot(aes(tot_steps)) +
+        geom_histogram(binwidth = 600) + 
+        ggtitle("Mean Daily Number of Steps") + 
+        theme(plot.title = element_text(hjust=0.5))
+
+mean_steps <- round(df1 %>% 
+        summarise(mean_steps = mean(tot_steps)))
+
+median_steps <- round(df1 %>% 
+        summarise(median_steps = median(tot_steps)))
+
+print(paste("The mean number of steps is",mean_steps, "and the median number of steps is",median_steps))
+
+
+```
 
 ## What is the average daily activity pattern?
 
+```{r avg_daily_pattern}
+df2 <- read_csv("activity.zip") 
+
+df_int <- df2 %>% 
+        group_by(interval) %>% 
+        summarize(avg_steps = mean(steps,na.rm = TRUE))
+
+
+plot_1 <- df_int %>% 
+        ggplot(aes(x = interval, y = avg_steps)) +
+        geom_line() + 
+        ggtitle("Average Number of Steps per 5 Minute Intervals") + 
+        theme(plot.title = element_text(hjust=0.5))
+
+plot_1
+
+interval_max<-df_int[which.max(df_int$avg_steps),][1]
+steps_max<-round(df_int[which.max(df_int$avg_steps),][2])
+
+
+print(paste(interval_max, "is the interval with the highest number of steps,", "which has an average of",steps_max,"steps."))
+
+
+```
 
 
 ## Imputing missing values
 
+```{r impute, echo=TRUE}
+#Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with \color{red}{\verb|NA|}NAs)
+sum(is.na(df2$steps))
+
+df_impute <- df2 %>%
+        group_by(interval) %>%
+        mutate(steps = ifelse(is.na(steps), mean(steps, na.rm = TRUE), steps))
+
+# Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. 
+#Do these values differ from the estimates from the first part of the assignment? 
+#What is the impact of imputing missing data on the estimates of the total daily number of steps?
+
+plot_hist_impute <- df_impute %>% 
+        group_by(date) %>% 
+        summarize(tot_steps = sum(steps)) %>%
+        ggplot(aes(tot_steps)) +
+        geom_histogram(binwidth = 500) +         
+        ggtitle("Mean Daily Number of Steps After Imputation") + 
+        theme(plot.title = element_text(hjust=0.5))
+
+plot_hist_impute
+
+#mean/median
+df_impute_dt <- df_impute %>% 
+        group_by(date) %>% 
+        summarise(tot_steps = sum(steps)) 
+
+mean_steps_i <- round(df_impute_dt %>% 
+        summarise(mean_steps = mean(tot_steps)))
+median_steps_i <- round(df_impute_dt %>% 
+        summarise(median_steps  = median(tot_steps)))
+
+print(paste("The mean number of steps after imputing is",mean_steps_i, "and the median number of steps after inputing is",median_steps_i))
+
+```
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+```{r weekend, echo=TRUE}
+
+df_impute <- df_impute %>% 
+        mutate(weekend = fct_collapse(weekdays(date),
+                     Weekend = c("Saturday", "Sunday"),
+                     Weekday = c("Monday","Tuesday","Wednesday","Thursday","Friday"))
+        )
+        
+#Plot weekend vs. weekday
+
+df_impute_plot <- df_impute %>% 
+        group_by(interval,weekend) %>% 
+        summarize(avg_steps = mean(steps,na.rm = TRUE))
+
+
+plot_3 <- df_impute_plot %>% 
+        ggplot(aes(x = interval, y = avg_steps)) +
+        geom_line() + 
+        facet_grid(~ weekend) + 
+        ggtitle("Average Number of Steps per 5 Minute Intervals") + 
+        theme(plot.title = element_text(hjust=0.5))
+        
+plot_3
+
+```

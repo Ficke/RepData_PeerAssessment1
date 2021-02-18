@@ -47,9 +47,8 @@ plot_1
 df_int[which.max(df_int$avg_steps),][1]
 
 #Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with \color{red}{\verb|NA|}NAs)
-summary(df)[7]
-sum(is.na(df$steps))
-count(df$steps)
+#summary(df2)[7]
+sum(is.na(df2$steps))
 
 #Devise a strategy for filling in all of the missing values in the dataset.
 #The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
